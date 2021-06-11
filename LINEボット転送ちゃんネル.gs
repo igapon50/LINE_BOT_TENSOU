@@ -29,13 +29,14 @@ function doPost(e) {
     let members = new TobaMembers();
     let mailAddressList = members.getLineBotTransferEMailList();
     console.log(mailAddressList);
-    mailAddressList = ['igapon@gmail.com'];
-    const userDisplayName = 'イガポン';
-    let user_message = '次回予報';
-    //let user_message = '日程情報';
-    //let user_message = '次回未記入者';
-    //let user_message = '次回参加者';
-    //let user_message = 'メールに転送されるLINEのメッセージ';
+    mailAddressList = getPropertyArray('TEST_MAILADDRESS');
+    const userDisplayName = 'userDisplayName';
+    let user_message;
+    user_message = '次回予報';
+    // user_message = '日程情報';
+    // user_message = '次回未記入者';
+    // user_message = '次回参加者';
+    // user_message = 'メールに転送されるLINEのメッセージ';
     return procMessage(mailAddressList, user_message, userDisplayName);
   }else{
     const contents = e.postData.contents;
@@ -55,7 +56,7 @@ function doPost(e) {
     // }
 
     const event = JSON.parse(contents).events[0];
-    if (event === null) {
+    if (!event) {
       // LINEプラットフォームから疎通確認のために、Webhookイベントが含まれないHTTP POSTリクエストが送信されることがあります。 この場合も、ステータスコード200を返してください。
       // https://developers.line.biz/ja/reference/messaging-api/#response
       return STATUS_200;
@@ -76,9 +77,8 @@ function doPost(e) {
 
 //メッセージプロシージャ
 function procMessage(mailAddressList, user_message, userDisplayName){
-  //ボットが受け取ったメッセージはメールに転送する(メニュー呼び出しメッセージ含む)
+  //ボットが受け取ったメッセージはメールに転送する
   sendEmail(mailAddressList, user_message, userDisplayName + 'の発言');
-  console.log('--- ' + user_message + ' ---');
   console.log('ボットはチャットでしゃべらない');
   return STATUS_200;
 }
