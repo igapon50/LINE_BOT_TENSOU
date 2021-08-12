@@ -24,19 +24,20 @@ function doGet(e) {
 // リクエストボディ
 // https://developers.line.biz/ja/reference/messaging-api/#request-body
 function doPost(e) {
+  let user_message = '';
+  let userDisplayName = ''
   if (!e){
     //引数が未定義ならテスト動作とする
-    let members = new TobaMembers();
+    let members = new Members();
     let mailAddressList = members.getLineBotTransferEMailList();
     console.log(mailAddressList);
     mailAddressList = getPropertyArray('TEST_MAILADDRESS');
-    const userDisplayName = 'userDisplayName';
-    let user_message;
     user_message = '次回予報';
     // user_message = '日程情報';
     // user_message = '次回未記入者';
     // user_message = '次回参加者';
     // user_message = 'メールに転送されるLINEのメッセージ';
+    userDisplayName = 'userDisplayName';
     return procMessage(mailAddressList, user_message, userDisplayName);
   }else{
     const contents = e.postData.contents;
@@ -66,11 +67,11 @@ function doPost(e) {
     if (type !== 'text') {
       return STATUS_200;
     }
-    const userID = event.source.userId;
-    const userDisplayName = getLINEUserName(userID);
-    let user_message = event.message.text;
-    let members = new TobaMembers();
+    let members = new Members();
     let mailAddressList = members.getLineBotTransferEMailList();
+    user_message = event.message.text;
+    const userID = event.source.userId;
+    userDisplayName = getLINEUserName(userID);
     return procMessage(mailAddressList, user_message, userDisplayName);
   }
 }
