@@ -30,7 +30,7 @@ function myUtilitiesTest(){
   console.log(displayUserName);
 }
 
-//配列をプロパティにセットする
+// 配列をプロパティにセットする
 function setPropertyArray(name, data) {
   let prop = PropertiesService.getScriptProperties();
   prop.setProperty(name, JSON.stringify(data));
@@ -41,7 +41,7 @@ function getPropertyArray(name) {
   return JSON.parse(prop.getProperty(name));
 }
 
-//dayから「〇月〇日」の文字列を作って返す。
+// dayから「〇月〇日」の文字列を作って返す。
 function getDayString(day){
     let y = day.getFullYear();
     let mon = day.getMonth() + 1;
@@ -54,20 +54,21 @@ function getDayString(day){
     return DayString;
   };
 
-//userIDからLINE表示名を取得する
+// userIDからLINE表示名を取得する
 function getLINEUserName(userID){
-  const url = `https://api.line.me/v2/bot/profile/${userID}`;
+  const url = 'https://api.line.me/v2/bot/profile/' + userID;
   const res = UrlFetchApp.fetch(url, {
-    headers: {
-      "Content-Type": "application/json; charset=UTF-8",
-      Authorization: "Bearer " + CHANNEL_ACCESS_TOKEN,
+    'headers': {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer ' + CHANNEL_ACCESS_TOKEN,
     },
-    method: "GET",
+    'method': 'get',
   });
+  console.log(res)
   return JSON.parse(res.getContentText()).displayName;
 }
 
-//LINEに応答メッセージを送る処理
+// LINEに応答メッセージを送る処理
 function sendLINE(reply_token, message){
   if (reply_token){
     let url = 'https://api.line.me/v2/bot/message/reply';
@@ -108,6 +109,8 @@ function sendEmail(mailAddressList, user_message, userDisplayName, attachImg) {
         options = {name: `${userDisplayName}`};
       }
     }
+    // 転送固定
+    // mailAddressList = [ 'igapon@gmail.com', 'igapon+test@gmail.com' ]
     GmailApp.sendEmail(mailAddressList.join(), subject, body, options);
     return true;
   }
@@ -140,28 +143,27 @@ function sendEmailIndividually(mailAddressList, user_message, userDisplayName, a
   return false;
 }
 
-//LINEのimageがidの時、画像のBlobデータを取得して返す。
-//idのimageが取得できない時はnullを返す
+// LINEのimageがidの時、画像のBlobデータを取得して返す。
 function getLINEImage(id) {
-  //画像取得用エンドポイント
-  var url = 'https://api-data.line.me/v2/bot/message/' + id + '/content';
-  var data = UrlFetchApp.fetch(url,{
+  // 画像取得用エンドポイント
+  let url = 'https://api-data.line.me/v2/bot/message/' + id + '/content';
+  // console.log(url)
+  let data = UrlFetchApp.fetch(url,{
     'headers': {
-      'Authorization' :  'Bearer ' + CHANNEL_ACCESS_TOKEN,
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer ' + CHANNEL_ACCESS_TOKEN,
     },
-    'method': 'get'
+    'method': 'get',
   });
-  if (data) return null;
-  var img = data.getBlob()
-  //ファイル名を被らせないように、今日のDateのミリ秒をファイル名にしています
+  console.log(data);
+  let img = data.getBlob();
+  // ファイル名を被らせないように、今日のDateのミリ秒をファイル名にしています
   img.getAs('image/png').setName(Number(new Date()) + '.png');
   return img;
 }
 
 //LINEのimageがidの時、画像のBlobデータを取得する。
 function getGoogleDriveImage(id) {
-  //画像取得用エンドポイント
-  //ファイル名を被らせないように、今日のDateのミリ秒をファイル名にしています
   var img = DriveApp.getFileById(id).getBlob();
   return img;
 }
