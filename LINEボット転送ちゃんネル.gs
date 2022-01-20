@@ -24,12 +24,15 @@ function doGet(e) {
 // リクエストボディ
 // https://developers.line.biz/ja/reference/messaging-api/#request-body
 function doPost(e) {
+  let IsTransferEMailEnabled = true; //true：EMail転送する、false：EMail転送しない
+  let reply_token = '';
   let user_message = '';
   let userDisplayName = ''
+  let members = new Members();
+  let mailAddressList = members.getLineBotTransferEMailList();
+  let attachImg = null
   if (!e){
     //引数が未定義ならテスト動作とする
-    let members = new Members();
-    let mailAddressList = members.getLineBotTransferEMailList();
     console.log(mailAddressList);
     mailAddressList = getPropertyArray('TEST_MAILADDRESS');
     user_message = '次回予報';
@@ -38,9 +41,11 @@ function doPost(e) {
     // user_message = '次回参加者';
     // user_message = 'メールに転送されるLINEのメッセージ';
     userDisplayName = 'userDisplayName';
-    return procMessage(mailAddressList, user_message, userDisplayName);
   }else{
-    const contents = e.postData.contents;
+    const postData = e.postData;
+    if (!postData) return STATUS_200;
+    const contents = postData.contents;
+    if (!contents) return STATUS_200;
 
     //現状では、GASのdoPostでリクエストヘッダーを取得する手段がないので、署名の検証ができない。
     //署名の検証
@@ -57,29 +62,40 @@ function doPost(e) {
     // }
 
     const event = JSON.parse(contents).events[0];
-    if (!event) {
-      // LINEプラットフォームから疎通確認のために、Webhookイベントが含まれないHTTP POSTリクエストが送信されることがあります。 この場合も、ステータスコード200を返してください。
-      // https://developers.line.biz/ja/reference/messaging-api/#response
-      return STATUS_200;
-    }
+    // LINEプラットフォームから疎通確認のために、Webhookイベントが含まれないHTTP POSTリクエストが送信されることがあります。
+    // この場合も、ステータスコード200を返してください。
+    // https://developers.line.biz/ja/reference/messaging-api/#response
+    if (!event) return STATUS_200;
+    reply_token = event.replyToken;
+    // LINEプラットフォームから送信されるHTTP POSTリクエストは、送受信に失敗しても再送されません。
+    if (!reply_token) return STATUS_200;
+    //ユーザー1対1のトークの場合転送しない、それ以外(グループトークgroupとトークルームroom)の場合転送する
+    if (event.source.type === 'user') IsTransferEMailEnabled = false;
     const type = event.message.type;
-    //LINEからTEXT以外が送られた場合
-    if (type !== 'text') {
-      return STATUS_200;
-    }
-    let members = new Members();
-    let mailAddressList = members.getLineBotTransferEMailList();
+    if (type !== 'image' || type !== 'text') return STATUS_200;
+    if (type === 'image') attachImg = getLINEImage(event.message.id); //画像Brob
     user_message = event.message.text;
     const userID = event.source.userId;
     userDisplayName = getLINEUserName(userID);
-    return procMessage(mailAddressList, user_message, userDisplayName);
   }
+  if (IsTransferEMailEnabled) receiveMessage(mailAddressList, user_message, attachImg, userDisplayName);
+  return replayMessage(reply_token, IsTransferEMailEnabled, mailAddressList, user_message);
 }
 
-//メッセージプロシージャ
-function procMessage(mailAddressList, user_message, userDisplayName){
-  //ボットが受け取ったメッセージはメールに転送する
-  sendEmail(mailAddressList, user_message, userDisplayName + 'の発言');
-  console.log('ボットはチャットでしゃべらない');
+//受信メッセージ、botが受け取ったメッセージはメールに転送する(リッチメニュー呼び出しメッセージ含む)
+function receiveMessage(mailAddressList, user_message, attachImg, userDisplayName){
+  sendEmail(mailAddressList, user_message, userDisplayName + 'の発言', attachImg);
+  return STATUS_200;
+}
+
+//応答メッセージ、botの応答をメールやLINEに送る
+function replayMessage(reply_token, IsTransferEMailEnabled, mailAddressList, user_message){
+  let bot_message = '';
+  let menus = new RichMenus();
+  if (menus) bot_message = menus.getReturnText(user_message);
+  if (bot_message){
+    if (IsTransferEMailEnabled) sendEmail(mailAddressList, bot_message, 'LINE botの発言', null);
+    if (reply_token) sendLINE(reply_token, bot_message);
+  }
   return STATUS_200;
 }
