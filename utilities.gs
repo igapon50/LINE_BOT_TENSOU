@@ -1,4 +1,5 @@
 const CHANNEL_SECRET = PropertiesService.getScriptProperties().getProperty('CHANNEL_SECRET');
+const TEST_GROUPID = PropertiesService.getScriptProperties().getProperty('TEST_GROUPID');
 const TEST_USERID = PropertiesService.getScriptProperties().getProperty('TEST_USERID');
 const TEST_MAILADDRESS = PropertiesService.getScriptProperties().getProperty('TEST_MAILADDRESS');
 
@@ -28,6 +29,8 @@ function myUtilitiesTest(){
   console.log(getSignature('test'));
   let displayUserName = getLINEUserName(TEST_USERID);
   console.log(displayUserName);
+  displayUserName = getLINEGroupUserName(TEST_GROUPID, TEST_USERID)
+  console.log(displayUserName)
 }
 
 // 配列をプロパティにセットする
@@ -43,29 +46,61 @@ function getPropertyArray(name) {
 
 // dayから「〇月〇日」の文字列を作って返す。
 function getDayString(day){
-    let y = day.getFullYear();
-    let mon = day.getMonth() + 1;
-    let d2 = day.getDate();
-    let h = day.getHours();
-    let min = day.getMinutes();
-    let s = day.getSeconds();
-//    let now = y+"/"+mon+"/"+d2+" "+h+":"+min+":"+s;
-    let DayString = mon+"月"+d2+"日";
-    return DayString;
-  };
+  let y = day.getFullYear();
+  let mon = day.getMonth() + 1;
+  let d2 = day.getDate();
+  let h = day.getHours();
+  let min = day.getMinutes();
+  let s = day.getSeconds();
+//  let now = y+"/"+mon+"/"+d2+" "+h+":"+min+":"+s;
+  let DayString = mon+"月"+d2+"日";
+  return DayString;
+};
+
+// groupIDとuserIDからLINE表示名を取得する
+function getLINEGroupUserName(groupID, userID){
+  const url = 'https://api.line.me/v2/bot/group/'+ groupID + '/member/' + userID;
+  const options = {
+    'headers': {
+      // 'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer ' + CHANNEL_ACCESS_TOKEN,
+    },
+    // 'muteHttpExceptions': true,
+    'method': 'get',
+  }
+  let ret = '';
+  try {
+    const res = UrlFetchApp.fetch(url, options);
+    console.log(res)
+    ret = JSON.parse(res.getContentText()).displayName;
+  } catch(e) {
+    console.error(e)
+  }
+  return ret;
+}
 
 // userIDからLINE表示名を取得する
+// 権限不足で以下の例外になるケースがある。例外回避のためにoptionsにmuteHttpExceptions:true追加
+// Exception: Request failed for https://api.line.me returned code 404. Truncated server response: {"message":"Not found"} (use muteHttpExceptions option to examine full response)
 function getLINEUserName(userID){
   const url = 'https://api.line.me/v2/bot/profile/' + userID;
-  const res = UrlFetchApp.fetch(url, {
+  const options = {
     'headers': {
       'Content-Type': 'application/json; charset=UTF-8',
       'Authorization': 'Bearer ' + CHANNEL_ACCESS_TOKEN,
     },
+    'muteHttpExceptions': true,
     'method': 'get',
-  });
-  console.log(res)
-  return JSON.parse(res.getContentText()).displayName;
+  }
+  let ret = '';
+  try {
+    const res = UrlFetchApp.fetch(url, options);
+    console.log(res)
+    ret = JSON.parse(res.getContentText()).displayName;
+  } catch(e) {
+    console.error(e)
+  }
+  return ret;
 }
 
 // LINEに応答メッセージを送る処理

@@ -77,8 +77,9 @@ function doPost(e) {
     if (type !== 'image' && type !== 'text') return STATUS_200;
     if (type === 'image') attachImg = getLINEImage(event.message.id); //画像Brob
     user_message = event.message.text;
+    const groupID = event.source.groupID;
     const userID = event.source.userId;
-    userDisplayName = getLINEUserName(userID);
+    userDisplayName = getLINEGroupUserName(groupID, userID);
   }
   if (IsTransferEMailEnabled) receiveMessage(mailAddressList, user_message, attachImg, userDisplayName);
   return replayMessage(reply_token, IsTransferEMailEnabled, mailAddressList, user_message);
