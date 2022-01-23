@@ -3,7 +3,7 @@ const TEST_GROUPID = PropertiesService.getScriptProperties().getProperty('TEST_G
 const TEST_USERID = PropertiesService.getScriptProperties().getProperty('TEST_USERID');
 const TEST_MAILADDRESS = PropertiesService.getScriptProperties().getProperty('TEST_MAILADDRESS');
 
-function myUtilitiesTest(){
+function Test_myUtilities(){
   //APIリターン値のテスト
   console.log(JSON.stringify({'content': 'post ok'}));
   let postok = ContentService.createTextOutput(JSON.stringify({'content': 'post ok'})).setMimeType(ContentService.MimeType.JSON);
@@ -144,8 +144,6 @@ function sendEmail(mailAddressList, user_message, userDisplayName, attachImg) {
         options = {name: `${userDisplayName}`};
       }
     }
-    // 転送固定
-    // mailAddressList = [ 'igapon@gmail.com', 'igapon+test@gmail.com' ]
     GmailApp.sendEmail(mailAddressList.join(), subject, body, options);
     return true;
   }
