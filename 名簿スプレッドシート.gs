@@ -22,8 +22,10 @@ function Test_myMembers() {
     let spreadsheet = SpreadsheetApp.openById(MEMBER_SPREADSHEET_ID);
     this.sheet = spreadsheet.getSheetByName(MEMBER_SHEET_NAME);
     let _values = this.sheet.getDataRange().getValues();
+    //一行目は見出しとする。見出し読み込み。
     this.header = new Member(_values[0]);
     _values.shift(); //ヘッダーを削除
+    //二行目以降はデータ。データ読み込み
     this.lastColumn = this.sheet.getDataRange().getLastColumn();
     this.lastRow = _values.length;
     this.members = [];
